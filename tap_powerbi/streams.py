@@ -26,7 +26,7 @@ class ReportsStream(PowerBIStream):
 
     def get_child_context(self, record: dict, context: Optional[dict]) -> dict:
         """Return a context dictionary for child streams."""
-        if record["datasetId"] is None:
+        if not record.get("datasetId"):
             return None
         return {
             "dataset_id": record["datasetId"],
