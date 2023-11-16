@@ -14,7 +14,7 @@ from tap_powerbi.auth import PowerBIAuthenticator
 class PowerBIStream(RESTStream):
     """PowerBI stream class."""
 
-    url_base = "https://api.powerbi.com/v1.0/myorg"
+    url_base = "https://api.powerbi.com/v1.0/myorg/admin"
 
     records_jsonpath = "$.value[*]"  
     next_page_token_jsonpath = "$.next_page"  

@@ -22,7 +22,7 @@ class PowerBIAuthenticator(OAuthAuthenticator, metaclass=SingletonMeta):
     def create_for_stream(cls, stream) -> "PowerBIAuthenticator":
         return cls(
             stream=stream,
-            auth_endpoint=f'https://login.microsoftonline.com/self.config["tenant"]/oauth2/v2.0/token',
+            auth_endpoint=f'https://login.microsoftonline.com/{cls.config["tenant_id"]}/oauth2/v2.0/token',
         )
 
     def is_token_valid(self) -> bool:
