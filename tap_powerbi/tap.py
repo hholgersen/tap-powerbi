@@ -14,8 +14,8 @@ from tap_powerbi.streams import (
 
 STREAM_TYPES = [
     ReportsStream,
-    # DataSetsStream,
-    # DataSetDataStream,
+    DataSetsStream,
+    DataSetDataStream,
 ]
 
 
