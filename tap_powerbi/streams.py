@@ -24,11 +24,13 @@ class ReportsStream(PowerBIStream):
         th.Property("embedUrl", th.StringType),
     ).to_dict()
 
-    # def get_child_context(self, record: dict, context: Optional[dict]) -> dict:
-    #     """Return a context dictionary for child streams."""
-    #     return {
-    #         "dataset_id": record["datasetId"],
-    #     }
+    def get_child_context(self, record: dict, context: Optional[dict]) -> dict:
+        """Return a context dictionary for child streams."""
+        if record["datasetId"] is None:
+            continue
+        return {
+            "dataset_id": record["datasetId"],
+        }
 
 
 class DataSetsStream(PowerBIStream):
