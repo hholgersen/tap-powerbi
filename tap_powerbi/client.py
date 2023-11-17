@@ -43,7 +43,7 @@ class PowerBIStream(RESTStream):
         if self.name == "dataset_data":
             self.offset = self.offset + self._page_size
             all_matches = extract_jsonpath(self.records_jsonpath, response.json())
-            first_match = next(iter(all_matches), None)
+            first_match = next(iter(all_matches), [])
             if "rows" in first_match:
                 if len(first_match["rows"]) == 0:
                     return None
