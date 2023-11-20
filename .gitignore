@@ -137,3 +137,6 @@ dmypy.json
 
 # dev
 config.json
+catalog.json
+stream*.json
+.vscode/

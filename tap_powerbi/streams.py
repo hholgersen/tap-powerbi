@@ -8,8 +8,17 @@ from singer_sdk import typing as th
 from tap_powerbi.client import PowerBIStream
 from http import HTTPStatus
 from singer_sdk.exceptions import FatalAPIError, RetriableAPIError
+from singer_sdk.pagination import BaseHATEOASPaginator
 import requests
 from time import sleep
+import datetime
+from urllib.parse import urlencode
+import typing as t
+
+class MyHATEOASPaginator(BaseHATEOASPaginator):
+    def get_next_url(self, response):
+        return response.json().get("continuationUri")
+
 
 class ReportsStream(PowerBIStream):
     """Define custom stream."""
@@ -210,6 +219,7 @@ class WorkspaceInfoStream(PowerBIStream):
             headers=headers, 
             json=workspace_info_req_body
             )
+        
         info_query.raise_for_status()
         scan_id = info_query.json()["id"]
         self.logger.info(f"Scan ID: {scan_id}")
@@ -251,4 +261,122 @@ class WorkspaceInfoStream(PowerBIStream):
 
         for chunk in workspace_chunks:
             yield from self.process_workspace_batch(chunk)
+
+
+
+class ActivityEventsStream(PowerBIStream):
+    """Define custom stream."""
+
+    name = "activity_events"
+    path = "/activityevents"
+    rest_method = "GET"
+    primary_keys = ["id"]
+    replication_key = "CreationTime"
+    records_jsonpath = "$.activityEventEntities[*]"  
+    # TYPE_CONFORMANCE_LEVEL = TypeConformanceLevel.ROOT_ONLY
+
+
+    def get_new_paginator(self):
+        return MyHATEOASPaginator()
+
+
+    def get_url_params(self, context, next_page_token):
+
+        if next_page_token is not None:
+            return urlencode({"continuationToken": next_page_token}, safe=':-. ()%#')
+        
+        start_date = self.get_starting_timestamp(context) or (datetime.datetime.now() - datetime.timedelta(days=30)).isoformat()
+        end_date = datetime.datetime.now().isoformat()
+
+        param_string = urlencode({"startDateTime": start_date, "endDateTime": end_date}, safe=':-. ()')
+
+        return param_string
+
+
+    def build_prepared_request(
+        self,
+        *args: t.Any,
+        **kwargs: t.Any,
+    ) -> requests.PreparedRequest:
+        """Build a generic but authenticated request.
+
+        Uses the authenticator instance to mutate the request with authentication.
+
+        Args:
+            *args: Arguments to pass to `requests.Request`_.
+            **kwargs: Keyword arguments to pass to `requests.Request`_.
+
+        Returns:
+            A `requests.PreparedRequest`_ object.
+
+        .. _requests.PreparedRequest:
+            https://requests.readthedocs.io/en/latest/api/#requests.PreparedRequest
+        .. _requests.Request:
+            https://requests.readthedocs.io/en/latest/api/#requests.Request
+        """
+        request = requests.Request(*args, **kwargs)
+        self.requests_session.auth = self.authenticator
+        prepped_request = self.requests_session.prepare_request(request)
+        return prepped_request
+
+
+    schema = th.PropertiesList(
+        th.Property("Id", th.StringType),
+        th.Property("RecordType", th.IntegerType),
+        th.Property("CreationTime", th.StringType),
+        th.Property("Operation", th.StringType),
+        th.Property("OrganizationId", th.StringType),
+        th.Property("UserType", th.IntegerType),
+        th.Property("UserKey", th.StringType),
+        th.Property("Workload", th.StringType),
+        th.Property("UserId", th.StringType),
+        th.Property("ClientIP", th.StringType),
+        th.Property("UserAgent", th.StringType),
+        th.Property("Activity", th.StringType),
+        th.Property("ItemName", th.StringType),
+        th.Property("WorkSpaceName", th.StringType),
+        th.Property("DatasetName", th.StringType),
+        th.Property("ReportName", th.StringType),
+        th.Property("CapacityId", th.StringType),
+        th.Property("CapacityName", th.StringType),
+        th.Property("WorkspaceId", th.StringType),
+        th.Property("AppName", th.StringType),
+        th.Property("ObjectId", th.StringType),
+        th.Property("DatasetId", th.StringType),
+        th.Property("ReportId", th.StringType),
+        th.Property("ArtifactId", th.StringType),
+        th.Property("ArtifactName", th.StringType),
+        th.Property("IsSuccess", th.BooleanType),
+        th.Property("ReportType", th.StringType),
+        th.Property("RequestId", th.StringType),
+        th.Property("ActivityId", th.StringType),
+        th.Property("AppReportId", th.StringType),
+        th.Property("DistributionMethod", th.StringType),
+        th.Property("ConsumptionMethod", th.StringType),
+        th.Property("AppId", th.StringType),
+        th.Property("ArtifactKind", th.StringType),
+        th.Property("RefreshEnforcementPolicy", th.IntegerType),
+        th.Property("ExportedArtifactInfo", th.ObjectType()),
+        th.Property("AggregatedWorkspaceInformation", th.ObjectType()),
+        th.Property("SensitivityLabelId", th.StringType),
+        th.Property("DashboardName", th.StringType),
+        th.Property("DashboardId", th.StringType),
+        th.Property("Datasets", th.ArrayType(wrapped_type=th.ObjectType())),
+        th.Property("ModelsSnapshots", th.ArrayType(wrapped_type=th.ObjectType())),
+        th.Property("DataConnectivityMode", th.StringType),
+        th.Property("RefreshType", th.StringType),
+        th.Property("LastRefreshTime", th.StringType),
+        th.Property("ArtifactAccessRequestInfo", th.ObjectType()),
+        th.Property("ImportId", th.StringType),
+        th.Property("ImportSource", th.StringType),
+        th.Property("ImportType", th.StringType),
+        th.Property("ImportDisplayName", th.StringType),
+        th.Property("ActionSource", th.StringType),
+        th.Property("LabelEventType", th.StringType),
+        th.Property("ActionSourceDetail", th.StringType),
+        th.Property("ArtifactType", th.StringType),
+        th.Property("SensitivityLabelEventData", th.ObjectType()),
+        th.Property("HasFullReportAttachment", th.BooleanType),
+        th.Property("SubscriptionDetails", th.ObjectType())
+    ).to_dict()
 

@@ -10,14 +10,16 @@ from tap_powerbi.streams import (
     DataSetsStream,
     PowerBIStream,
     ReportsStream,
-    WorkspaceInfoStream
+    WorkspaceInfoStream,
+    # ActivityEventsStream
 )
 
 STREAM_TYPES = [
     ReportsStream,
     DataSetsStream,
     DataSetDataStream,
-    WorkspaceInfoStream
+    WorkspaceInfoStream,
+    # ActivityEventsStream
 ]
 
 
