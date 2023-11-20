@@ -1,7 +1,7 @@
 """PowerBI Authentication."""
 
 
-from singer import utils
+import datetime
 from singer_sdk.authenticators import OAuthAuthenticator, SingletonMeta
 
 
@@ -35,6 +35,6 @@ class PowerBIAuthenticator(OAuthAuthenticator, metaclass=SingletonMeta):
             return False
         if not self.expires_in:
             return True
-        if int(self.expires_in) > (utils.now() - self.last_refreshed).total_seconds():
+        if int(self.expires_in) > (datetime.datetime.utcnow().replace(tzinfo=pytz.UTC) - self.last_refreshed).total_seconds():
             return True
         return False
