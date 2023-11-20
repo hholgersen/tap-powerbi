@@ -6,18 +6,18 @@ from singer_sdk import Stream, Tap
 from singer_sdk import typing as th  # JSON schema typing helpers
 
 from tap_powerbi.streams import (
-    DataSetDataStream,
+    # DataSetDataStream,
     DataSetsStream,
     PowerBIStream,
     ReportsStream,
     WorkspaceInfoStream,
-    # ActivityEventsStream
+    ActivityEventsStream
 )
 
 STREAM_TYPES = [
     ReportsStream,
     DataSetsStream,
-    DataSetDataStream,
+    # DataSetDataStream,
     WorkspaceInfoStream,
     # ActivityEventsStream
 ]

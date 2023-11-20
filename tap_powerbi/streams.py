@@ -92,73 +92,73 @@ class DataSetsStream(PowerBIStream):
             raise FatalAPIError(msg)
 
 
-    def get_child_context(self, record: dict, context: Optional[dict]) -> dict:
-        """Return a context dictionary for child streams."""
-        return {
-            "dataset_id": record.get("id"),
-            "dataset_name": record.get("name"),
-        }
+    # def get_child_context(self, record: dict, context: Optional[dict]) -> dict:
+    #     """Return a context dictionary for child streams."""
+    #     return {
+    #         "dataset_id": record.get("id"),
+    #         "dataset_name": record.get("name"),
+    #     }
 
 
-class DataSetDataStream(PowerBIStream):
-    """Define custom stream."""
+# class DataSetDataStream(PowerBIStream):
+#     """Define custom stream."""
 
-    name = "dataset_data"
-    path = "/datasets/{dataset_id}/executeQueries"
-    rest_method = "POST"
-    primary_keys = ["id"]
-    replication_key = None
-    records_jsonpath = "$.results.[*].tables.[*]"
-    parent_stream_type = DataSetsStream
-
-
-    def validate_response(self, response: requests.Response) -> None:
-        """Validate HTTP response.
-        """
-
-        if response.status_code in [404, 400]:
-            return
-
-        if (
-            response.status_code in self.extra_retry_statuses
-            or response.status_code >= HTTPStatus.INTERNAL_SERVER_ERROR
-        ):
-            msg = self.response_error_message(response)
-            raise RetriableAPIError(msg, response)
-
-        if (
-            HTTPStatus.BAD_REQUEST
-            <= response.status_code
-            < HTTPStatus.INTERNAL_SERVER_ERROR
-        ):
-            msg = self.response_error_message(response)
-            raise FatalAPIError(msg)
+#     name = "dataset_data"
+#     path = "/datasets/{dataset_id}/executeQueries"
+#     rest_method = "POST"
+#     primary_keys = ["id"]
+#     replication_key = None
+#     records_jsonpath = "$.results.[*].tables.[*]"
+#     parent_stream_type = DataSetsStream
 
 
-    schema = th.PropertiesList(
-        th.Property("datasetId", th.StringType),
-        th.Property("dataset_name", th.StringType),
-        th.Property("rows", th.CustomType({"type": ["array", "string"]})),
-    ).to_dict()
+#     def validate_response(self, response: requests.Response) -> None:
+#         """Validate HTTP response.
+#         """
 
-    def prepare_request_payload(
-        self, context: Optional[dict], next_page_token: Optional[Any]
-    ) -> Optional[dict]:
+#         if response.status_code in [404, 400]:
+#             return
 
-        query = {
-            "queries": [
-                {
-                    "query": f"EVALUATE TopnSkip({self._page_size},{self.offset},'{context.get('dataset_name')}')"
-                }
-            ],
-            "serializerSettings": {"includeNulls": True},
-        }
-        return query
+#         if (
+#             response.status_code in self.extra_retry_statuses
+#             or response.status_code >= HTTPStatus.INTERNAL_SERVER_ERROR
+#         ):
+#             msg = self.response_error_message(response)
+#             raise RetriableAPIError(msg, response)
 
-    def post_process(self, row: dict, context: Optional[dict]) -> dict:
-        row["datasetId"] = context.get("dataset_id")
-        row["dataset_name"] = context.get("dataset_name")
-        return row
+#         if (
+#             HTTPStatus.BAD_REQUEST
+#             <= response.status_code
+#             < HTTPStatus.INTERNAL_SERVER_ERROR
+#         ):
+#             msg = self.response_error_message(response)
+#             raise FatalAPIError(msg)
+
+
+#     schema = th.PropertiesList(
+#         th.Property("datasetId", th.StringType),
+#         th.Property("dataset_name", th.StringType),
+#         th.Property("rows", th.CustomType({"type": ["array", "string"]})),
+#     ).to_dict()
+
+#     def prepare_request_payload(
+#         self, context: Optional[dict], next_page_token: Optional[Any]
+#     ) -> Optional[dict]:
+
+#         query = {
+#             "queries": [
+#                 {
+#                     "query": f"EVALUATE TopnSkip({self._page_size},{self.offset},'{context.get('dataset_name')}')"
+#                 }
+#             ],
+#             "serializerSettings": {"includeNulls": True},
+#         }
+#         return query
+
+#     def post_process(self, row: dict, context: Optional[dict]) -> dict:
+#         row["datasetId"] = context.get("dataset_id")
+#         row["dataset_name"] = context.get("dataset_name")
+#         return row
 
 
 
@@ -285,10 +285,10 @@ class ActivityEventsStream(PowerBIStream):
         if next_page_token is not None:
             return urlencode({"continuationToken": next_page_token}, safe=':-. ()%#')
         
-        start_date = self.get_starting_timestamp(context) or (datetime.datetime.now() - datetime.timedelta(days=30)).isoformat()
-        end_date = datetime.datetime.now().isoformat()
+        start_date = self.get_starting_timestamp(context) or (datetime.datetime.now() - datetime.timedelta(hours=8)).isoformat(timespec='seconds')
+        end_date = datetime.datetime.utcnow().isoformat(timespec='seconds')
 
-        param_string = urlencode({"startDateTime": start_date, "endDateTime": end_date}, safe=':-. ()')
+        param_string = urlencode({"startDateTime": f"'{start_date}'", "endDateTime": f"'{end_date}'"}, safe="':-. ()")
 
         return param_string
 
@@ -315,8 +315,14 @@ class ActivityEventsStream(PowerBIStream):
             https://requests.readthedocs.io/en/latest/api/#requests.Request
         """
         request = requests.Request(*args, **kwargs)
-        self.requests_session.auth = self.authenticator
+        #self.requests_session.auth = self.authenticator
         prepped_request = self.requests_session.prepare_request(request)
+        #request.auth = self.authenticator
+        prepped_request2 = request.prepare()
+        prepped_request2.prepare_auth(self.authenticator)
+
+        prepped_request.headers.update(prepped_request2.headers)
+        
         return prepped_request
 
 
