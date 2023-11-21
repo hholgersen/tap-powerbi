@@ -44,7 +44,7 @@ class DataSetsStream(PowerBIStream):
     path = "/datasets/"
     primary_keys = ["id"]
     replication_key = None
-    records_jsonpath = "$value.[*]"
+    records_jsonpath = "$.value[*]"
     # parent_stream_type = ReportsStream
     schema = th.PropertiesList(
         th.Property("id", th.StringType),
