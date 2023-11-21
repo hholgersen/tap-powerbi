@@ -19,7 +19,7 @@ STREAM_TYPES = [
     DataSetsStream,
     # DataSetDataStream,
     WorkspaceInfoStream,
-    # ActivityEventsStream
+    ActivityEventsStream
 ]
 
 

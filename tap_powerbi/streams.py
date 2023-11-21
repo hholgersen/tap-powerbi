@@ -4,11 +4,12 @@
 from typing import Any, Optional
 
 from singer_sdk import typing as th
-
+from urllib.parse import parse_qsl
 from tap_powerbi.client import PowerBIStream
 from http import HTTPStatus
 from singer_sdk.exceptions import FatalAPIError, RetriableAPIError
 from singer_sdk.pagination import BaseHATEOASPaginator
+from singer_sdk.helpers._typing import TypeConformanceLevel
 import requests
 from time import sleep
 import datetime
@@ -17,7 +18,7 @@ import typing as t
 
 class MyHATEOASPaginator(BaseHATEOASPaginator):
     def get_next_url(self, response):
-        return response.json().get("continuationUri")
+        return response.json().get("continuationToken")
 
 
 class ReportsStream(PowerBIStream):
@@ -264,9 +265,9 @@ class ActivityEventsStream(PowerBIStream):
     path = "/activityevents"
     rest_method = "GET"
     primary_keys = ["id"]
-    replication_key = "CreationTime"
+    #replication_key = "CreationTime"
     records_jsonpath = "$.activityEventEntities[*]"  
-    # TYPE_CONFORMANCE_LEVEL = TypeConformanceLevel.ROOT_ONLY
+    TYPE_CONFORMANCE_LEVEL = TypeConformanceLevel.ROOT_ONLY
 
 
     def get_new_paginator(self):
@@ -276,10 +277,11 @@ class ActivityEventsStream(PowerBIStream):
     def get_url_params(self, context, next_page_token):
 
         if next_page_token is not None:
-            return urlencode({"continuationToken": next_page_token}, safe=':-. ()%#')
+            continuation_token = f"'{next_page_token.path}'"
+            return urlencode({"continuationToken": continuation_token}, safe=':-. ()%#')
         
-        start_date = self.get_starting_timestamp(context) or (datetime.datetime.now() - datetime.timedelta(hours=8)).isoformat(timespec='seconds')
-        end_date = datetime.datetime.utcnow().isoformat(timespec='seconds')
+        start_date = (datetime.datetime.now() - datetime.timedelta(hours=24)).replace(hour=0, minute=0, second=0).isoformat(timespec='seconds')
+        end_date = (datetime.datetime.now() - datetime.timedelta(hours=24)).replace(hour=23, minute=59, second=59).isoformat(timespec='seconds')
 
         param_string = urlencode({"startDateTime": f"'{start_date}'", "endDateTime": f"'{end_date}'"}, safe="':-. ()")
 
