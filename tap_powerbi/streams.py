@@ -36,23 +36,16 @@ class ReportsStream(PowerBIStream):
         th.Property("embedUrl", th.StringType),
     ).to_dict()
 
-    def get_child_context(self, record: dict, context: Optional[dict]) -> dict:
-        """Return a context dictionary for child streams."""
-
-        return {
-            "dataset_id": record.get("datasetId"),
-        }
-
 
 class DataSetsStream(PowerBIStream):
     """Define custom stream."""
 
     name = "datasets"
-    path = "/datasets/{dataset_id}"
+    path = "/datasets/"
     primary_keys = ["id"]
     replication_key = None
-    records_jsonpath = "$[*]"
-    parent_stream_type = ReportsStream
+    records_jsonpath = "$value.[*]"
+    # parent_stream_type = ReportsStream
     schema = th.PropertiesList(
         th.Property("id", th.StringType),
         th.Property("name", th.StringType),
