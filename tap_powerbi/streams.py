@@ -264,7 +264,7 @@ class ActivityEventsStream(PowerBIStream):
     name = "activity_events"
     path = "/activityevents"
     rest_method = "GET"
-    primary_keys = ["id"]
+    primary_keys = ["Id"]
     #replication_key = "CreationTime"
     records_jsonpath = "$.activityEventEntities[*]"  
     TYPE_CONFORMANCE_LEVEL = TypeConformanceLevel.ROOT_ONLY
