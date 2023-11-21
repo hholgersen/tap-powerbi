@@ -49,6 +49,7 @@ class DataSetsStream(PowerBIStream):
     TYPE_CONFORMANCE_LEVEL = TypeConformanceLevel.ROOT_ONLY
     # parent_stream_type = ReportsStream
     schema = th.PropertiesList(
+        th.Property("id", th.StringType),
         th.Property("ContentProviderType", th.StringType),
         th.Property("CreatedDate", th.StringType),
         th.Property("Encryption", th.ObjectType()),
