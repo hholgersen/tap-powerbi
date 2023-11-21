@@ -46,10 +46,20 @@ class DataSetsStream(PowerBIStream):
     primary_keys = ["id"]
     replication_key = None
     records_jsonpath = "$.value[*]"
+    TYPE_CONFORMANCE_LEVEL = TypeConformanceLevel.ROOT_ONLY
     # parent_stream_type = ReportsStream
     schema = th.PropertiesList(
-        th.Property("id", th.StringType),
+        th.Property("ContentProviderType", th.StringType),
+        th.Property("CreatedDate", th.StringType),
+        th.Property("Encryption", th.ObjectType()),
+        th.Property("IsInPlaceSharingEnabled", th.BooleanType),
+        th.Property("addRowsAPIEnabled", th.BooleanType),
+        th.Property("description", th.StringType),
         th.Property("name", th.StringType),
+        th.Property("queryScaleOutSettings", th.StringType),
+        th.Property("upstreamDataflows", th.ArrayType(wrapped_type=th.ObjectType())),
+        th.Property("users", th.ArrayType(wrapped_type=th.ObjectType())),
+        th.Property("workspaceId", th.StringType),
         th.Property("webUrl", th.StringType),
         th.Property("configuredBy", th.StringType),
         th.Property("isRefreshable", th.BooleanType),
@@ -58,9 +68,7 @@ class DataSetsStream(PowerBIStream):
         th.Property("isOnPremGatewayRequired", th.BooleanType),
         th.Property("targetStorageMode", th.StringType),
         th.Property("createReportEmbedURL", th.StringType),
-        th.Property("qnaEmbedURL", th.StringType),
-        th.Property("upstreamDatasets", th.CustomType({"type": ["array", "string"]})),
-        th.Property("users", th.CustomType({"type": ["array", "string"]})),
+        th.Property("qnaEmbedURL", th.StringType)
     ).to_dict()
 
     def validate_response(self, response: requests.Response) -> None:
@@ -165,7 +173,7 @@ class WorkspaceInfoStream(PowerBIStream):
     primary_keys = ["id"]
     replication_key = None
     records_jsonpath = "$[*]"
-    # TYPE_CONFORMANCE_LEVEL = TypeConformanceLevel.ROOT_ONLY
+    TYPE_CONFORMANCE_LEVEL = TypeConformanceLevel.ROOT_ONLY
 
 
 
