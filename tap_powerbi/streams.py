@@ -210,8 +210,6 @@ class WorkspaceInfoStream(PowerBIStream):
         "workspaces": workspace_ids
         }
 
-        self.logger.info(f"Body: {workspace_info_req_body}")
-
         headers = {
             'Authorization': f"Bearer {self.authenticator.access_token}",
             'Content-Type': 'application/json'
@@ -225,7 +223,6 @@ class WorkspaceInfoStream(PowerBIStream):
         
         info_query.raise_for_status()
         scan_id = info_query.json()["id"]
-        self.logger.info(f"Scan ID: {scan_id}")
         status_url = f"https://api.powerbi.com/v1.0/myorg/admin/workspaces/scanStatus/{scan_id}"
         finished = False
         sleep(3)
@@ -238,11 +235,8 @@ class WorkspaceInfoStream(PowerBIStream):
 
             if scan_status["status"] == "Succeeded":
                 finished = True
-                self.logger.info(f"Scan status: {scan_status['status']}, returning results...")
             else:
-                self.logger.info(f"Scan status: {scan_status['status']}, waiting 10 seconds...")
-
-            sleep(10)
+                sleep(10)
 
         final_result_r = f"https://api.powerbi.com/v1.0/myorg/admin/workspaces/scanResult/{scan_id}"
 
